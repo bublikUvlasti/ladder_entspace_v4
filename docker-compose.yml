@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # PostgreSQL База данных
+  postgres:
+    image: postgres:15-alpine
+    container_name: ladder_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ladder_entspace
+      POSTGRES_USER: ladder_user
+      POSTGRES_PASSWORD: ladder_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ladder_user -d ladder_entspace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js + WebSocket приложение
+  app:
+    build: .
+    container_name: ladder_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"  # Next.js
+      - "3001:3001"  # WebSocket
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://ladder_user:ladder_password@postgres:5432/ladder_entspace?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-super-secret-32-character-key-here-change-this
+      - PORT=3000
+      - WEBSOCKET_PORT=3001
+      - ADMIN_API_KEY=admin-secret-key-change-this
+      - EXPORT_ENABLED=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs  # Для логов (опционально)
+
+volumes:
+  postgres_data:
+    driver: local 

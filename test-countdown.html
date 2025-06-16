@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест автоматического перехода</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        .countdown {
+            font-size: 2rem;
+            color: #4ade80;
+            margin: 1rem 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            text-align: left;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏆 Игра завершена!</h1>
+        <p>Победитель: <strong>Тестовый игрок</strong></p>
+        
+        <div class="countdown" id="countdown">
+            Автоматический переход на главную через <span id="timer">7</span> сек.
+        </div>
+        
+        <button onclick="exitNow()">Выйти в главное меню сейчас</button>
+        <button onclick="startTest()">Запустить тест</button>
+        <button onclick="stopTest()">Остановить тест</button>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let countdown = null;
+        let timer = null;
+        
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}<br>`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`🎯 ${message}`);
+        }
+        
+        function startTest() {
+            log('Starting countdown test...');
+            
+            if (timer) {
+                clearInterval(timer);
+                log('Cleared existing timer');
+            }
+            
+            countdown = 7;
+            document.getElementById('timer').textContent = countdown;
+            
+            timer = setInterval(() => {
+                log(`Countdown tick: ${countdown}`);
+                
+                if (countdown <= 1) {
+                    log('Countdown finished, would redirect to home');
+                    clearInterval(timer);
+                    timer = null;
+                    document.getElementById('timer').textContent = '0';
+                    document.getElementById('countdown').innerHTML = '✅ Переход выполнен!';
+                    return;
+                }
+                
+                countdown--;
+                document.getElementById('timer').textContent = countdown;
+            }, 1000);
+        }
+        
+        function stopTest() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+                log('Timer stopped manually');
+            }
+            countdown = null;
+            document.getElementById('timer').textContent = '7';
+            document.getElementById('countdown').innerHTML = 'Автоматический переход на главную через <span id="timer">7</span> сек.';
+        }
+        
+        function exitNow() {
+            log('Manual exit triggered');
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            document.getElementById('countdown').innerHTML = '✅ Ручной выход выполнен!';
+        }
+        
+        // Автоматически запускаем тест при загрузке
+        window.onload = function() {
+            log('Page loaded, starting automatic test');
+            setTimeout(startTest, 1000);
+        };
+    </script>
+</body>
+</html> 

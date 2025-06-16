@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String
+  wins          Int       @default(0)
+  losses        Int       @default(0)
+  
+  // Новые поля
+  fullName      String?   // ФИО пользователя
+  contactInfo   String?   // Контактная информация (телефон, телеграм, VK и т.д.)
+  city          String?   // Город проживания
+  
+  // Тип пользователя и дополнительная информация
+  userType      UserType?
+  
+  // Поля для студентов
+  studyPlace    String?   // Место учебы
+  course        String?   // Курс
+  studyDirection String?  // Направление обучения
+  
+  // Поля для менеджеров
+  companyName   String?   // Название компании
+  
+  // Поля для предпринимателей
+  businessName  String?   // Название компании
+  revenue       String?   // Оборот
+  industry      String?   // Индустрия
+  businessRole  String?   // Роль в бизнесе
+  businessGoals String?   // Текущие цели бизнеса
+  transformation String?  // Какой переход/трансформацию совершаю в бизнесе
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Игровые связи
+  gamesAsPlayer1 Game[] @relation("Player1Games")
+  gamesAsPlayer2 Game[] @relation("Player2Games")
+  wonGames       Game[] @relation("WinnerGames")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Game {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  status       GameStatus @default(WAITING)
+  ballPosition Int       @default(0)
+  balance1     Int       @default(50)
+  balance2     Int       @default(50)
+  move1        Int?
+  move2        Int?
+  round        Int       @default(1)
+  
+  // Связи с игроками
+  player1Id    String
+  player1      User      @relation("Player1Games", fields: [player1Id], references: [id])
+  
+  player2Id    String?
+  player2      User?     @relation("Player2Games", fields: [player2Id], references: [id])
+  
+  winnerId     String?
+  winner       User?     @relation("WinnerGames", fields: [winnerId], references: [id])
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  finishedAt   DateTime?
+}
+
+enum GameStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+}
+
+enum UserType {
+  ENTREPRENEUR  // Предприниматель
+  STUDENT      // Студент
+  MANAGER      // Менеджер
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест автоматического перехода - Простой</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .status {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .countdown {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+            margin: 20px 0;
+        }
+        .button {
+            padding: 12px 24px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .button:hover {
+            background: #1d4ed8;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 4px;
+            padding: 2px 0;
+        }
+        .log-entry.info { color: #60a5fa; }
+        .log-entry.success { color: #34d399; }
+        .log-entry.warning { color: #fbbf24; }
+        .log-entry.error { color: #f87171; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Тест автоматического перехода</h1>
+        
+        <div class="status">
+            <h2>Статус игры: <span id="gameStatus">WAITING</span></h2>
+            <div id="countdownSection" style="display: none;">
+                <p class="countdown" id="countdown">Автоматический переход на главную через 7 сек.</p>
+                <button class="button" onclick="exitToHome()">
+                    Выйти в главное меню сейчас
+                </button>
+            </div>
+        </div>
+
+        <div>
+            <h3>Тестовые действия:</h3>
+            <button class="button" onclick="simulateGameFinish()">
+                Симулировать завершение игры
+            </button>
+            <button class="button" onclick="resetTest()">
+                Сбросить тест
+            </button>
+        </div>
+
+        <div class="log" id="log">
+            <div class="log-entry info">🎯 Тест загружен</div>
+        </div>
+    </div>
+
+    <script>
+        // Симуляция состояния игры
+        let currentGame = null;
+        let countdown = null;
+        let countdownTimer = null;
+
+        function log(message, type = 'info') {
+            const logElement = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateGameStatus(status) {
+            document.getElementById('gameStatus').textContent = status;
+            log(`🎮 Статус игры изменен на: ${status}`, 'info');
+        }
+
+        function simulateGameFinish() {
+            log('🏆 Симуляция завершения игры', 'success');
+            
+            // Симулируем получение gameUpdated события
+            currentGame = {
+                id: 'test123',
+                code: 'TEST',
+                status: 'FINISHED',
+                winner: { name: 'TestPlayer' }
+            };
+            
+            updateGameStatus('FINISHED');
+            log('🎯 currentGame установлен:', 'info');
+            log(`   - status: ${currentGame.status}`, 'info');
+            log(`   - winner: ${currentGame.winner.name}`, 'info');
+            
+            // Проверяем условия для запуска countdown
+            checkAndStartCountdown();
+        }
+
+        function checkAndStartCountdown() {
+            log('🎯 Проверка условий для запуска countdown:', 'info');
+            
+            const gameStatus = currentGame?.status;
+            const isFinished = gameStatus === 'FINISHED';
+            const countdownIsNull = countdown === null;
+            const shouldStartCountdown = isFinished && countdownIsNull;
+            
+            log(`   - gameStatus: ${gameStatus}`, 'info');
+            log(`   - isFinished: ${isFinished}`, 'info');
+            log(`   - countdownIsNull: ${countdownIsNull}`, 'info');
+            log(`   - shouldStartCountdown: ${shouldStartCountdown}`, 'info');
+            
+            if (shouldStartCountdown) {
+                log('🎯 Условия выполнены, запуск countdown', 'success');
+                startCountdown();
+            } else {
+                log('❌ Условия не выполнены', 'error');
+            }
+        }
+
+        function startCountdown() {
+            countdown = 7;
+            document.getElementById('countdownSection').style.display = 'block';
+            log('🎯 Countdown запущен с 7 секунд', 'success');
+            
+            updateCountdownDisplay();
+            
+            countdownTimer = setInterval(() => {
+                countdown--;
+                log(`🎯 Countdown: ${countdown}`, 'info');
+                
+                if (countdown <= 0) {
+                    log('🎯 Countdown завершен, переход на главную', 'success');
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                    exitToHome();
+                    return;
+                }
+                
+                updateCountdownDisplay();
+            }, 1000);
+        }
+
+        function updateCountdownDisplay() {
+            const countdownElement = document.getElementById('countdown');
+            if (countdown !== null && countdown > 0) {
+                countdownElement.textContent = `Автоматический переход на главную через ${countdown} сек.`;
+            } else {
+                countdownElement.textContent = 'Переход...';
+            }
+        }
+
+        function exitToHome() {
+            log('🏠 Переход в главное меню', 'success');
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+            
+            // В реальном приложении здесь был бы router.push('/')
+            alert('✅ Успешно! В реальном приложении произошел бы переход на главную страницу');
+            resetTest();
+        }
+
+        function resetTest() {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+            
+            currentGame = null;
+            countdown = null;
+            document.getElementById('countdownSection').style.display = 'none';
+            updateGameStatus('WAITING');
+            log('🔄 Тест сброшен', 'warning');
+        }
+
+        // Автоматически запускаем тест при загрузке
+        window.onload = function() {
+            log('✅ Тест готов к использованию', 'success');
+            log('💡 Нажмите "Симулировать завершение игры" для тестирования', 'info');
+        };
+    </script>
+</body>
+</html> 
